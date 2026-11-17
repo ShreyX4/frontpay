@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AccountingRouteImport } from './routes/accounting'
 import { Route as BusinessRouteImport } from './routes/business'
 import { Route as InvestRouteImport } from './routes/invest'
 import { Route as UnderwritingRouteImport } from './routes/underwriting'
@@ -19,6 +20,11 @@ import { Route as PayIdRouteImport } from './routes/pay.$id'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountingRoute = AccountingRouteImport.update({
+  id: '/accounting',
+  path: '/accounting',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BusinessRoute = BusinessRouteImport.update({
@@ -49,6 +55,7 @@ const PayIdRoute = PayIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/accounting': typeof AccountingRoute
   '/business': typeof BusinessRoute
   '/invest': typeof InvestRoute
   '/underwriting': typeof UnderwritingRoute
@@ -57,6 +64,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/accounting': typeof AccountingRoute
   '/business': typeof BusinessRoute
   '/invest': typeof InvestRoute
   '/underwriting': typeof UnderwritingRoute
@@ -66,6 +74,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/accounting': typeof AccountingRoute
   '/business': typeof BusinessRoute
   '/invest': typeof InvestRoute
   '/underwriting': typeof UnderwritingRoute
@@ -75,12 +84,26 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/business' | '/invest' | '/underwriting' | '/pay/$id' | '/pay/'
+    | '/'
+    | '/accounting'
+    | '/business'
+    | '/invest'
+    | '/underwriting'
+    | '/pay/$id'
+    | '/pay/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/business' | '/invest' | '/underwriting' | '/pay/$id' | '/pay'
+  to:
+    | '/'
+    | '/accounting'
+    | '/business'
+    | '/invest'
+    | '/underwriting'
+    | '/pay/$id'
+    | '/pay'
   id:
     | '__root__'
     | '/'
+    | '/accounting'
     | '/business'
     | '/invest'
     | '/underwriting'
@@ -90,6 +113,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AccountingRoute: typeof AccountingRoute
   BusinessRoute: typeof BusinessRoute
   InvestRoute: typeof InvestRoute
   UnderwritingRoute: typeof UnderwritingRoute
@@ -104,6 +128,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/accounting': {
+      id: '/accounting'
+      path: '/accounting'
+      fullPath: '/accounting'
+      preLoaderRoute: typeof AccountingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/business': {
@@ -146,6 +177,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AccountingRoute: AccountingRoute,
   BusinessRoute: BusinessRoute,
   InvestRoute: InvestRoute,
   UnderwritingRoute: UnderwritingRoute,

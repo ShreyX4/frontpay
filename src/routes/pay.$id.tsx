@@ -42,7 +42,7 @@ function PayInvoice() {
   const meta = metaMap?.get(id);
   const from = meta?.business_name || (inv ? shortAddr(inv.business) : "");
   const isDebtor = !!(address && inv && address.toLowerCase() === inv.debtor.toLowerCase());
-  const repaid = events?.findLast((e) => e.name === "InvoiceRepaid" && String(e.args.id) === id);
+  const repaid = [...(events ?? [])].reverse().find((e) => e.name === "InvoiceRepaid" && String(e.args.id) === id);
   const split = repaid ? { toPool: repaid.args.toPool as bigint, toBusiness: repaid.args.toBusiness as bigint } : null;
   const receipt = paidHash ?? repaid?.hash;
 

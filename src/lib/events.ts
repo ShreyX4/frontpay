@@ -101,7 +101,7 @@ export function useTxLookup() {
   const { data } = useEvents();
   return (id: bigint | number | string, action: TxAction): { hash?: string; timestamp?: number } => {
     const want = ACTION_EVENT[action];
-    const ev = data?.findLast((e) => e.name === want && String(e.args.id) === String(id));
+    const ev = [...(data ?? [])].reverse().find((e) => e.name === want && String(e.args.id) === String(id));
     if (ev) return { hash: ev.hash, timestamp: ev.timestamp };
     const h = getTx(id, action);
     return h ? { hash: h } : {};

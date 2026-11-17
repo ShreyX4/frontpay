@@ -5,7 +5,13 @@ import { isAddress } from "viem";
 import { toast } from "sonner";
 import { FileUp, Loader2, Sparkles, AlertCircle, Link2, FileText } from "lucide-react";
 import { Container } from "@/components/fp/shell";
-import { PageHeader, StatusBadge, Timeline, Empty, ConnectHint, Addr, TxLink } from "@/components/fp/bits";
+import { PageHeader, StatusBadge, Timeline, Empty, ConnectHint, Party, TxLink } from "@/components/fp/bits";
+import { parseEventLogs } from "viem";
+import { factoringEventsAbi } from "@/config/abi";
+import { useTxLookup, timelineLinks } from "@/lib/events";
+import { useInvoiceMeta, uploadInvoiceFile, saveInvoiceMeta, openInvoiceFile, type InvoiceMeta } from "@/lib/meta";
+import { CheckCircle2, Copy, Paperclip } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +20,7 @@ import { useChainAction, useInvoices, readContract, fetchInvoice } from "@/lib/c
 import { extractInvoice } from "@/lib/invoice-ai.functions";
 import { toUsdc, dateToTs, usd, fmtDate } from "@/lib/format";
 import { offerFor, STATUS, type Invoice } from "@/lib/invoice";
-import { saveTx, getTx } from "@/lib/txstore";
+import { saveTx } from "@/lib/txstore";
 import { useHydrated } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/business")({
@@ -31,8 +37,9 @@ export const Route = createFileRoute("/business")({
   component: BusinessPage,
 });
 
-const EMPTY = { businessId: "", customerName: "", customerId: "", customerWallet: "", invoiceNumber: "", amount: "", invoiceDate: "", dueDate: "" };
+const EMPTY = { businessName: "", businessId: "", customerName: "", customerId: "", customerWallet: "", invoiceNumber: "", amount: "", invoiceDate: "", dueDate: "" };
 type Form = typeof EMPTY;
+const OPTIONAL = { customerEmail: "", description: "" };
 const norm = (s: string) => s.trim().toLowerCase();
 
 function BusinessPage() {
@@ -75,6 +82,9 @@ function InvoiceForm() {
   const { address } = useConnection();
   const hydrated = useHydrated();
   const [f, setF] = useState<Form>(EMPTY);
+  const [opt, setOpt] = useState(OPTIONAL);
+  const [file, setFile] = useState<File | null>(null);
+  const [done, setDone] = useState<{ id: bigint; ref: string; hash: string; customer: string } | null>(null);
   const [reading, setReading] = useState(false);
   const [dup, setDup] = useState(false);
   const [checking, setChecking] = useState(false);
@@ -84,6 +94,7 @@ function InvoiceForm() {
 
   async function onFile(file: File) {
     if (file.size > 10_000_000) { toast.error("File is too large (max 10 MB)"); return; }
+    setFile(file);
     setReading(true);
     try {
       const buf = new Uint8Array(await file.arrayBuffer());
@@ -120,17 +131,29 @@ function InvoiceForm() {
     finally { setChecking(false); }
     const hash = await run({
       steps: [{ label: "Submitting invoice", functionName: "registerInvoice", args: [f.customerWallet, toUsdc(f.amount), dateToTs(f.dueDate), fp, f.invoiceNumber.trim()] }],
-      success: "Invoice submitted. Share the payment link with your customer.",
+      success: "Invoice submitted",
+      onReceipt: async (rc) => {
+        const ev = parseEventLogs({ abi: factoringEventsAbi, logs: rc.logs, eventName: "InvoiceRegistered" })[0];
+        let id: bigint | null = ev ? ev.args.id : null;
+        if (id === null) {
+          const count = await readContract<bigint>("invoiceCount");
+          for (let i = count - 1n; i >= 0n && i >= count - 5n; i--) if ((await fetchInvoice(i)).fingerprint === fp) { id = i; break; }
+        }
+        if (id === null) return;
+        saveTx(id, "register", rc.transactionHash);
+        const path = file ? await uploadInvoiceFile(file) : null;
+        const ok = await saveInvoiceMeta({
+          invoice_id: Number(id), business_name: f.businessName.trim(), customer_name: f.customerName.trim(),
+          customer_email: opt.customerEmail.trim() || null, description: opt.description.trim() || null, file_url: path,
+        });
+        if (!ok) toast.error("Invoice is on-chain, but we couldn't save its names. It will show addresses instead.");
+        setDone({ id, ref: f.invoiceNumber.trim(), hash: rc.transactionHash, customer: f.customerName.trim() });
+      },
     });
-    if (hash) {
-      const count = await readContract<bigint>("invoiceCount");
-      for (let i = count - 1n; i >= 0n && i >= count - 5n; i--) {
-        const inv = await fetchInvoice(i);
-        if (inv.fingerprint === fp) { saveTx(i, "register", hash); break; }
-      }
-      setF(EMPTY);
-    }
+    if (hash) { setF(EMPTY); setOpt(OPTIONAL); setFile(null); }
   }
+
+  if (done) return <SuccessPanel done={done} onAgain={() => setDone(null)} />;
 
   return (
     <form onSubmit={submit} className="surface p-6">
@@ -138,22 +161,24 @@ function InvoiceForm() {
         className="flex w-full items-center gap-4 rounded-xl border border-dashed bg-muted/50 p-4 text-left transition-colors hover:border-primary hover:bg-accent/50">
         <span className="grid size-10 place-items-center rounded-lg bg-card text-primary shadow-card">{reading ? <Loader2 className="size-5 animate-spin" /> : <FileUp className="size-5" />}</span>
         <span className="flex-1">
-          <span className="block font-medium">{reading ? "Reading your invoice…" : "Upload invoice (PDF or image)"}</span>
+          <span className="block font-medium">{reading ? "Reading your invoice…" : file ? file.name : "Upload invoice (PDF or image)"}</span>
           <span className="flex items-center gap-1 text-xs text-muted-foreground"><Sparkles className="size-3" />We'll fill in the form for you. You can edit anything.</span>
         </span>
       </button>
       <input ref={fileRef} type="file" accept="application/pdf,image/*" className="hidden" onChange={(e) => { const x = e.target.files?.[0]; if (x) onFile(x); e.target.value = ""; }} />
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
+        <Field label="Business name" className="sm:col-span-2"><Input value={f.businessName} onChange={set("businessName")} placeholder="Northside Event Rentals" /></Field>
         <Field label="Your business ID" hint="e.g. business number"><Input value={f.businessId} onChange={set("businessId")} placeholder="BN 123456789" /></Field>
         <Field label="Invoice number"><Input value={f.invoiceNumber} onChange={set("invoiceNumber")} placeholder="INV-1042" /></Field>
         <Field label="Customer name"><Input value={f.customerName} onChange={set("customerName")} placeholder="Acme Corp" /></Field>
         <Field label="Customer ID"><Input value={f.customerId} onChange={set("customerId")} placeholder="ACME-001" /></Field>
         <Field label="Customer wallet address" className="sm:col-span-2"><Input value={f.customerWallet} onChange={set("customerWallet")} placeholder="0x…" className="font-mono text-sm" /></Field>
         <Field label="Amount (USD)"><Input value={f.amount} onChange={set("amount")} inputMode="decimal" placeholder="12,000.00" className="num" /></Field>
-        <div />
+        <Field label="Customer email" hint="optional"><Input type="email" value={opt.customerEmail} onChange={(e) => setOpt({ ...opt, customerEmail: e.target.value })} placeholder="ap@acme.com" /></Field>
         <Field label="Invoice date"><Input type="date" value={f.invoiceDate} onChange={set("invoiceDate")} /></Field>
         <Field label="Due date"><Input type="date" value={f.dueDate} onChange={set("dueDate")} /></Field>
+        <Field label="Description" hint="optional" className="sm:col-span-2"><Textarea rows={2} value={opt.description} onChange={(e) => setOpt({ ...opt, description: e.target.value })} placeholder="What was this invoice for?" /></Field>
       </div>
 
       {dup && (
@@ -175,6 +200,30 @@ function InvoiceForm() {
   );
 }
 
+function SuccessPanel({ done, onAgain }: { done: { id: bigint; ref: string; hash: string; customer: string }; onAgain: () => void }) {
+  const link = typeof window === "undefined" ? "" : `${window.location.origin}/pay/${done.id}`;
+  return (
+    <div className="surface p-6 fade-up">
+      <CheckCircle2 className="size-10 text-success" />
+      <h3 className="mt-3 text-xl font-semibold">Invoice {done.ref} submitted</h3>
+      <p className="mt-1 text-sm text-muted-foreground">Send this link to {done.customer || "your customer"} so they can confirm they owe it.</p>
+      <div className="mt-5 flex items-center gap-2 rounded-xl border bg-muted/50 p-2 pl-3">
+        <span className="flex-1 truncate font-mono text-sm">{link}</span>
+        <Button size="sm" onClick={() => { navigator.clipboard.writeText(link); toast.success("Payment link copied"); }}><Copy className="size-4" />Copy</Button>
+      </div>
+      <ol className="mt-6 grid gap-3 text-sm sm:grid-cols-3">
+        <li className="rounded-xl bg-success-soft p-3 text-success"><b>Done</b><div>Invoice submitted</div></li>
+        <li className="rounded-xl bg-accent p-3 text-accent-foreground"><b>Next</b><div>Your customer confirms</div></li>
+        <li className="rounded-xl bg-muted p-3 text-muted-foreground"><b>Then</b><div>We make an offer</div></li>
+      </ol>
+      <div className="mt-6 flex items-center justify-between">
+        <TxLink hash={done.hash} label="View transaction" />
+        <Button variant="outline" onClick={onAgain}>Submit another invoice</Button>
+      </div>
+    </div>
+  );
+}
+
 function Field({ label, hint, children, className }: { label: string; hint?: string; children: React.ReactNode; className?: string }) {
   return (
     <div className={className}>
@@ -188,6 +237,7 @@ function MyInvoices() {
   const { address } = useConnection();
   const hydrated = useHydrated();
   const { data, isLoading } = useInvoices();
+  const { data: meta } = useInvoiceMeta();
   const mine = (data ?? []).filter((i) => address && i.business.toLowerCase() === address.toLowerCase()).reverse();
   return (
     <section className="mt-14">
@@ -195,16 +245,18 @@ function MyInvoices() {
       {!hydrated || !address ? <Empty icon={<FileText className="size-4" />} title="Connect your wallet">Your submitted invoices will appear here.</Empty>
         : isLoading ? <div className="space-y-3">{[0, 1].map((i) => <Skeleton key={i} className="h-28 w-full rounded-2xl" />)}</div>
         : mine.length === 0 ? <Empty icon={<FileText className="size-4" />} title="No invoices yet">Submit your first invoice above.</Empty>
-        : <div className="space-y-4">{mine.map((inv) => <InvoiceRow key={inv.id.toString()} inv={inv} />)}</div>}
+        : <div className="space-y-4">{mine.map((inv) => <InvoiceRow key={inv.id.toString()} inv={inv} meta={meta?.get(inv.id.toString())} />)}</div>}
     </section>
   );
 }
 
-function InvoiceRow({ inv }: { inv: Invoice }) {
+function InvoiceRow({ inv, meta }: { inv: Invoice; meta?: InvoiceMeta | undefined }) {
+  const lookup = useTxLookup();
+  const links = timelineLinks(lookup, inv.id, inv.status);
   const { run, busy, step } = useChainAction();
   const copy = () => { navigator.clipboard.writeText(`${window.location.origin}/pay/${inv.id}`); toast.success("Payment link copied"); };
   const o = offerFor(inv);
-  const lastTx = getTx(inv.id, "repay") ?? getTx(inv.id, "accept") ?? getTx(inv.id, "register");
+  const lastTx = [...links].reverse().find((l) => l.hash)?.hash;
   return (
     <div className="surface p-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -213,7 +265,9 @@ function InvoiceRow({ inv }: { inv: Invoice }) {
             <span className="font-semibold">{inv.invoiceRef}</span>
             <StatusBadge status={inv.status} />
           </div>
-          <div className="mt-1 text-sm text-muted-foreground">Customer <Addr a={inv.debtor} /> · Due {fmtDate(inv.dueDate)} · #{inv.id.toString()}</div>
+          <div className="mt-1 text-sm text-muted-foreground">Billed to <Party name={meta?.customer_name} addr={inv.debtor} /> · Due {fmtDate(inv.dueDate)} · #{inv.id.toString()}</div>
+          {meta?.description && <div className="mt-0.5 text-sm text-muted-foreground">{meta.description}</div>}
+          {meta?.file_url && <button onClick={() => openInvoiceFile(meta.file_url!)} className="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline"><Paperclip className="size-3" />Invoice file</button>}
         </div>
         <div className="text-right">
           <div className="text-xl font-semibold num">{usd(inv.faceAmount)}</div>
@@ -223,7 +277,7 @@ function InvoiceRow({ inv }: { inv: Invoice }) {
           </div>
         </div>
       </div>
-      <div className="mt-4"><Timeline status={inv.status} /></div>
+      <div className="mt-4"><Timeline status={inv.status} links={links} /></div>
       {inv.status === STATUS.Offered && (
         <div className="mt-5 rounded-xl border border-primary/30 bg-accent/40 p-5">
           <div className="text-sm font-medium text-accent-foreground">You have an offer</div>

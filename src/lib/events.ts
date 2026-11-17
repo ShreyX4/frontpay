@@ -100,3 +100,14 @@ export function useTxLookup() {
     return h ? { hash: h } : {};
   };
 }
+
+/** Links for the 5 timeline steps: Submitted, Confirmed (or Rejected), Offer, Funded, Repaid (or Defaulted). */
+export function timelineLinks(lookup: ReturnType<typeof useTxLookup>, id: bigint, status: number) {
+  return [
+    lookup(id, "register"),
+    status === 7 ? lookup(id, "reject") : lookup(id, "confirm"),
+    lookup(id, "offer"),
+    lookup(id, "accept"),
+    status === 6 ? lookup(id, "default") : lookup(id, "repay"),
+  ];
+}

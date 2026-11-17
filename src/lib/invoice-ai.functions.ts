@@ -7,7 +7,7 @@ const Input = z.object({
   base64: z.string().min(10).max(14_000_000),
 });
 
-const FIELDS = ["businessId", "customerName", "customerId", "customerWallet", "invoiceNumber", "amount", "invoiceDate", "dueDate"] as const;
+const FIELDS = ["businessName", "businessId", "customerName", "customerId", "customerWallet", "invoiceNumber", "amount", "invoiceDate", "dueDate"] as const;
 export type ExtractedInvoice = Partial<Record<(typeof FIELDS)[number], string | null>>;
 
 export const extractInvoice = createServerFn({ method: "POST" })
@@ -34,7 +34,7 @@ export const extractInvoice = createServerFn({ method: "POST" })
         input: [{
           role: "user",
           content: [
-            { type: "input_text", text: "Extract fields from this invoice. businessId = the issuing business's registration/tax/business number. customerName = the billed customer's name. customerId = the customer's account/tax/customer number. customerWallet = a 0x… wallet address if present. invoiceNumber as printed. amount = total due as a plain number without currency symbols (e.g. 12500.00). invoiceDate and dueDate in YYYY-MM-DD. Use null for anything not present." },
+            { type: "input_text", text: "Extract fields from this invoice. businessName = the issuing business's name. businessId = the issuing business's registration/tax/business number. customerName = the billed customer's name. customerId = the customer's account/tax/customer number. customerWallet = a 0x… wallet address if present. invoiceNumber as printed. amount = total due as a plain number without currency symbols (e.g. 12500.00). invoiceDate and dueDate in YYYY-MM-DD. Use null for anything not present." },
             media,
           ],
         }],

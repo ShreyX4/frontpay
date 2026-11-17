@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, FileUp, ShieldCheck, Banknote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Stat } from "@/components/fp/bits";
+import { ActivityFeed } from "@/components/fp/activity";
 import { usePool } from "@/lib/chain-hooks";
 import { usd, shortAddr } from "@/lib/format";
 import { FACTORING_ADDRESS, addressUrl } from "@/config/chain";
@@ -77,13 +78,13 @@ function Index() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 pb-20">
+      <section className="mx-auto max-w-6xl px-4 pb-14">
         <div className="mb-5 flex items-end justify-between">
           <div>
             <h2 className="text-2xl font-semibold">The pool, live</h2>
             <p className="text-sm text-muted-foreground">Every number below is read directly from the public ledger.</p>
           </div>
-          <a href={addressUrl(FACTORING_ADDRESS)} target="_blank" rel="noreferrer" className="hidden font-mono text-xs text-muted-foreground hover:text-primary sm:block">{shortAddr(FACTORING_ADDRESS)} ↗</a>
+          <a href={`${addressUrl(FACTORING_ADDRESS)}#code`} target="_blank" rel="noreferrer" className="hidden font-mono text-xs text-muted-foreground hover:text-primary sm:block">{shortAddr(FACTORING_ADDRESS)} ↗</a>
         </div>
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
           <Stat loading={isLoading} label="Pool size" value={usd(data?.totalAssets)} />
@@ -93,6 +94,14 @@ function Index() {
           <Stat loading={isLoading} label="Invoices financed" value={data?.count.toString()} />
           <Stat loading={isLoading} label="Share price" value={data ? `$${Number(formatUnits(data.sharePrice, 6)).toFixed(4)}` : "—"} />
         </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 pb-20">
+        <div className="mb-5">
+          <h2 className="text-2xl font-semibold">Recent activity</h2>
+          <p className="text-sm text-muted-foreground">The latest movements on the pool, each linked to its public receipt.</p>
+        </div>
+        <ActivityFeed limit={10} />
       </section>
     </>
   );

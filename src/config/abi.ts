@@ -37,3 +37,17 @@ export const usdcAbi = parseAbi([
   "function allowance(address owner, address spender) view returns (uint256)",
   "function balanceOf(address account) view returns (uint256)",
 ]);
+
+export const factoringEventsAbi = parseAbi([
+  "event Deposited(address indexed investor, uint256 amount, uint256 sharesMinted)",
+  "event Withdrawn(address indexed investor, uint256 amount, uint256 sharesBurned)",
+  "event FirstLossDeposited(uint256 amount)",
+  "event InvoiceRegistered(uint256 indexed id, address indexed business, address indexed debtor, uint256 faceAmount, uint256 dueDate, bytes32 fingerprint)",
+  "event InvoiceConfirmed(uint256 indexed id, address indexed debtor)",
+  "event OfferSet(uint256 indexed id, uint16 advanceBps, uint16 feeBpsPer30Days, uint256 advanceAmount, uint256 feeAmount)",
+  "event InvoiceRejected(uint256 indexed id, string reason)",
+  "event InvoiceFunded(uint256 indexed id, address indexed business, uint256 advanceAmount, uint256 feeAmount)",
+  "event InvoiceRepaid(uint256 indexed id, address indexed payer, uint256 toPool, uint256 toBusiness)",
+  "event InvoiceDefaulted(uint256 indexed id, uint256 coveredByFirstLoss, uint256 poolLoss)",
+  "event DefaultRecovered(uint256 indexed id, uint256 recoveredToPool, uint256 toFirstLoss, uint256 toBusiness)",
+]);

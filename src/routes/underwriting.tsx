@@ -67,7 +67,7 @@ function Underwriting() {
   );
 }
 
-function OfferCard({ inv, isOwner, maxAdv, maxFee }: { inv: Invoice; isOwner: boolean; maxAdv?: number; maxFee?: number }) {
+function OfferCard({ inv, isOwner, maxAdv, maxFee }: { inv: Invoice; isOwner: boolean; maxAdv?: number | undefined; maxFee?: number | undefined }) {
   const days = Math.max(1, daysLeft(inv.dueDate));
   const tier = suggestTier(inv.faceAmount, days);
   const [adv, setAdv] = useState((tier.advanceBps / 100).toString());

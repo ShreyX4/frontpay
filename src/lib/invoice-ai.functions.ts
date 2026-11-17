@@ -13,7 +13,7 @@ export type ExtractedInvoice = Partial<Record<(typeof FIELDS)[number], string | 
 export const extractInvoice = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => Input.parse(d))
   .handler(async ({ data }): Promise<{ ok: true; fields: ExtractedInvoice } | { ok: false; error: string }> => {
-    const key = process.env.LOVABLE_API_KEY;
+    const key = process.env['LOVABLE_API_KEY'];
     if (!key) return { ok: false, error: "AI reading is not configured." };
     const isPdf = data.mimeType === "application/pdf";
     if (!isPdf && !data.mimeType.startsWith("image/")) return { ok: false, error: "Please upload a PDF or an image." };

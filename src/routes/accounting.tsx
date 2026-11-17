@@ -94,7 +94,7 @@ function Accounting() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {entries.map((e, i) => <EntryRow key={i} e={e} first={i === 0 || entries[i - 1].date !== e.date || entries[i - 1].invoiceId !== e.invoiceId} />)}
+              {entries.map((e, i) => <EntryRow key={i} e={e} first={i === 0 || entries[i - 1]!.date !== e.date || entries[i - 1]!.invoiceId !== e.invoiceId} />)}
             </TableBody>
             <TableFooter>
               <TableRow>

@@ -79,7 +79,7 @@ function Layer({ n, title, body }: { n: string; title: string; body: string }) {
   );
 }
 
-function Deposit({ connected, balance }: { connected: boolean; balance?: bigint }) {
+function Deposit({ connected, balance }: { connected: boolean; balance?: bigint | undefined }) {
   const [amt, setAmt] = useState("");
   const { run, busy, step } = useChainAction();
   const v = toUsdc(amt);
@@ -123,7 +123,7 @@ function Withdraw({ connected }: { connected: boolean }) {
   );
 }
 
-function AmountInput({ value, onChange, max, label }: { value: string; onChange: (s: string) => void; max?: bigint; label: string }) {
+function AmountInput({ value, onChange, max, label }: { value: string; onChange: (s: string) => void; max?: bigint | undefined; label: string }) {
   return (
     <div>
       <div className="mb-1.5 flex justify-between text-xs text-muted-foreground"><span>Amount (USD)</span>

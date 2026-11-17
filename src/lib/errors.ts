@@ -28,5 +28,5 @@ export function friendlyError(err: unknown): string {
   } else if (err instanceof Error) reason = err.message;
   else reason = String(err);
   for (const [re, msg] of MAP) if (re.test(reason)) return msg;
-  return reason.split("\n")[0].slice(0, 160) || "Something went wrong";
+  return (reason.split("\n")[0] ?? "").slice(0, 160) || "Something went wrong";
 }

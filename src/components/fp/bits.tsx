@@ -15,7 +15,7 @@ export function Addr({ a, className }: { a?: string; className?: string }) {
   );
 }
 
-export function TxLink({ hash, label = "Receipt" }: { hash?: string; label?: string }) {
+export function TxLink({ hash, label = "Receipt" }: { hash?: string | undefined; label?: string }) {
   if (!hash) return <span className="text-muted-foreground">—</span>;
   return (
     <a href={txUrl(hash)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">

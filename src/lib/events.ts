@@ -5,9 +5,16 @@ import { factoringEventsAbi } from "@/config/abi";
 import { FACTORING_ADDRESS, FACTORING_DEPLOY_BLOCK } from "@/config/chain";
 import { getTx, type TxAction } from "./txstore";
 
+export type EventArgs = Partial<{
+  id: bigint; investor: string; business: string; debtor: string; payer: string; reason: string; fingerprint: string;
+  amount: bigint; sharesMinted: bigint; sharesBurned: bigint; faceAmount: bigint; dueDate: bigint;
+  advanceBps: number; feeBpsPer30Days: number; advanceAmount: bigint; feeAmount: bigint;
+  toPool: bigint; toBusiness: bigint; coveredByFirstLoss: bigint; poolLoss: bigint;
+  recoveredToPool: bigint; toFirstLoss: bigint;
+}>;
 export type ChainEvent = {
   name: string;
-  args: Record<string, unknown>;
+  args: EventArgs;
   hash: `0x${string}`;
   block: bigint;
   logIndex: number;
@@ -40,7 +47,7 @@ async function getLogsRange(from: bigint, to: bigint): Promise<ChainEvent[]> {
   const raw = await publicClient.getLogs({ address: FACTORING_ADDRESS, fromBlock: from, toBlock: to });
   const logs = parseEventLogs({ abi: factoringEventsAbi, logs: raw, strict: false });
   return logs.map((l) => ({
-    name: l.eventName, args: (l.args ?? {}) as Record<string, unknown>,
+    name: l.eventName, args: (l.args ?? {}) as EventArgs,
     hash: l.transactionHash!, block: l.blockNumber!, logIndex: l.logIndex ?? 0, timestamp: 0,
   }));
 }

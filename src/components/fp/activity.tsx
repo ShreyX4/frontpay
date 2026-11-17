@@ -1,5 +1,6 @@
 import { ArrowDownLeft, ArrowUpRight, FileText, ShieldCheck, Tag, Ban, Banknote, CheckCircle2, AlertTriangle, RotateCcw, Shield, Activity } from "lucide-react";
 import type { ReactNode } from "react";
+import { useInvoices } from "@/lib/chain-hooks";
 import { useEvents, type ChainEvent } from "@/lib/events";
 import { useInvoiceMeta, type InvoiceMeta } from "@/lib/meta";
 import { usd, shortAddr } from "@/lib/format";
@@ -43,10 +44,10 @@ function ago(ts: number) {
 export function ActivityFeed({ limit = 10 }: { limit?: number }) {
   const { data, isLoading, isError } = useEvents();
   const { data: meta } = useInvoiceMeta();
+  const { data: invoices } = useInvoices();
   if (isLoading) return <div className="space-y-2">{Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-14 w-full rounded-xl" />)}</div>;
   if (isError) return <Empty title="Activity unavailable">We couldn't load recent activity from the network. Try again shortly.</Empty>;
-  const refs = new Map<string, string>();
-  // invoice refs come from meta-less events? use registered fingerprint not ref — fall back to on-chain ref via meta only
+  const refs = new Map((invoices ?? []).map((i) => [i.id.toString(), i.invoiceRef]));
   const items = [...(data ?? [])].reverse().slice(0, limit);
   if (items.length === 0) return <Empty icon={<Activity className="size-4" />} title="No activity yet">Deposits and invoices will show up here.</Empty>;
   return (

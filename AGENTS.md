@@ -37,3 +37,4 @@ use the editor.
 - Tx hashes/timestamps come from contract event logs (src/lib/events.ts: unfiltered getLogs in 10k-block chunks, decoded locally because the Arc RPC rejects multi-topic filters; cached in localStorage); src/lib/txstore.ts is only a fallback.
 - Human-readable invoice details live off-chain in the Cloud table invoice_meta (src/lib/meta.ts), keyed by on-chain invoice id; files go in the private 'invoices' bucket and open via signed URLs.
 - Invoice AI extraction runs server-side in src/lib/invoice-ai.functions.ts via the Lovable AI Gateway Responses API.
+- `contracts/` holds the Solidity source and Hardhat tests; it is excluded from tsconfig, eslint and the Vite watcher and must never be imported by the web app (separate toolchain).

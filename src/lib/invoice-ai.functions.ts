@@ -11,7 +11,7 @@ const FIELDS = ["businessId", "customerName", "customerId", "customerWallet", "i
 export type ExtractedInvoice = Partial<Record<(typeof FIELDS)[number], string | null>>;
 
 export const extractInvoice = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => Input.parse(d))
+  .validator((d: unknown) => Input.parse(d))
   .handler(async ({ data }): Promise<{ ok: true; fields: ExtractedInvoice } | { ok: false; error: string }> => {
     const key = process.env['LOVABLE_API_KEY'];
     if (!key) return { ok: false, error: "AI reading is not configured." };

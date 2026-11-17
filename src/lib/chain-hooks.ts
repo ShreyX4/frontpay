@@ -106,19 +106,19 @@ export function useChainAction() {
     let last: `0x${string}` | null = null;
     try {
       const wallet = await getWalletClient(wagmiConfig);
-      const total = opts.steps.length + (opts.approve ? 1 : 0);
-      let n = 1;
+      let needApprove = false;
       if (opts.approve) {
         const allowance = await publicClient.readContract({ address: USDC_ADDRESS, abi: usdcAbi, functionName: "allowance", args: [address, FACTORING_ADDRESS] });
-        if (allowance < opts.approve) {
-          setStep(`Step 1 of ${total}: Allow ${usd(opts.approve)} USDC…`);
-          const h = await wallet.writeContract({ chain: arcTestnet, account: address, address: USDC_ADDRESS, abi: usdcAbi, functionName: "approve", args: [FACTORING_ADDRESS, opts.approve] });
-          await publicClient.waitForTransactionReceipt({ hash: h });
-          n = 2;
-        } else setStep(null);
-        if (allowance >= opts.approve) { n = 1; }
+        needApprove = allowance < opts.approve;
       }
-      const realTotal = n === 2 ? total : opts.steps.length;
+      const realTotal = opts.steps.length + (needApprove ? 1 : 0);
+      let n = 1;
+      if (needApprove && opts.approve) {
+        setStep(`Step 1 of ${realTotal}: Allow ${usd(opts.approve)} USDC…`);
+        const h = await wallet.writeContract({ chain: arcTestnet, account: address, address: USDC_ADDRESS, abi: usdcAbi, functionName: "approve", args: [FACTORING_ADDRESS, opts.approve] });
+        await publicClient.waitForTransactionReceipt({ hash: h });
+        n = 2;
+      }
       for (const [i, s] of opts.steps.entries()) {
         setStep(realTotal > 1 ? `Step ${n} of ${realTotal}: ${s.label}…` : `${s.label}…`);
         await publicClient.simulateContract({ account: address, address: FACTORING_ADDRESS, abi: factoringAbi, functionName: s.functionName, args: s.args } as never);

@@ -135,7 +135,7 @@ export function useChainAction() {
         last = h; n++;
       }
       toast.success(opts.success, last ? { action: { label: "View receipt", onClick: () => window.open(txUrl(last!), "_blank") } } : undefined);
-      await qc.invalidateQueries({ queryKey: ["chain"] });
+      await Promise.all([qc.invalidateQueries({ queryKey: ["chain"] }), qc.invalidateQueries({ queryKey: ["meta"] })]);
       return last;
     } catch (e) {
       toast.error(friendlyError(e));

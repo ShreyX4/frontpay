@@ -67,27 +67,46 @@ export function Empty({ icon, title, children }: { icon?: ReactNode; title: stri
 }
 
 const STEPS = ["Submitted", "Customer confirmed", "Offer", "Funded", "Repaid"];
-export function Timeline({ status }: { status: number }) {
-  const reached = status === 6 ? 4 : status === 7 ? 1 : status; // index of last reached
+export type TimelineLink = { hash?: string | undefined; timestamp?: number | undefined };
+export function Timeline({ status, links = [] }: { status: number; links?: TimelineLink[] }) {
+  const reached = status === 6 ? 4 : status === 7 ? 1 : status;
   return (
-    <ol className="flex flex-wrap items-center gap-x-2 gap-y-2 text-xs">
+    <ol className="flex flex-wrap items-start gap-x-2 gap-y-2 text-xs">
       {STEPS.map((s, i) => {
         const done = i < reached;
         const last = i === STEPS.length - 1;
         const label = last && status === 6 ? "Defaulted" : i === 1 && status === 7 ? "Rejected" : s;
         const bad = (last && status === 6) || (i === 1 && status === 7);
+        const link = links[i];
+        const shown = done || bad;
         return (
-          <li key={s} className="flex items-center gap-2">
-            <span className={cn("flex items-center gap-1.5 rounded-full px-2 py-1",
-              bad ? "bg-danger-soft text-destructive" : done ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")}>
-              {done && !bad && <Check className="size-3" />}{label}
-            </span>
-            {!last && <span className="h-px w-3 bg-border" />}
+          <li key={s} className="flex items-start gap-2">
+            <div className="flex flex-col items-start gap-1">
+              {shown && link?.hash ? (
+                <a href={txUrl(link.hash)} target="_blank" rel="noreferrer" title="View transaction"
+                  className={cn("flex items-center gap-1.5 rounded-full px-2 py-1 hover:underline", bad ? "bg-danger-soft text-destructive" : "bg-primary/10 text-primary")}>
+                  {!bad && <Check className="size-3" />}{label}<ExternalLink className="size-3 opacity-60" />
+                </a>
+              ) : (
+                <span className={cn("flex items-center gap-1.5 rounded-full px-2 py-1",
+                  bad ? "bg-danger-soft text-destructive" : done ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")}>
+                  {done && !bad && <Check className="size-3" />}{label}
+                </span>
+              )}
+              {shown && link?.timestamp ? <span className="pl-2 text-[10px] text-muted-foreground">{new Date(link.timestamp * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span> : null}
+            </div>
+            {!last && <span className="mt-3 h-px w-3 bg-border" />}
           </li>
         );
       })}
     </ol>
   );
+}
+
+/** Name with short address underneath/beside it. */
+export function Party({ name, addr }: { name?: string | null | undefined; addr: string }) {
+  if (!name) return <Addr a={addr} />;
+  return <span className="inline-flex items-baseline gap-1.5"><span className="font-medium text-foreground">{name}</span><Addr a={addr} /></span>;
 }
 
 export function ConnectHint({ children = "Connect your wallet to continue." }: { children?: ReactNode }) {

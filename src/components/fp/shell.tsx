@@ -58,8 +58,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       <main className="flex-1">{children}</main>
       <footer className="border-t">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <span>Testnet demo — no real money. Contract verified on Arc Testnet.</span>
-          <a href={addressUrl(FACTORING_ADDRESS)} target="_blank" rel="noreferrer" className="font-mono text-xs hover:text-primary">Contract {shortAddr(FACTORING_ADDRESS)} ↗</a>
+          <span>Testnet demo — no real money · <a href={`${addressUrl(FACTORING_ADDRESS)}#code`} target="_blank" rel="noreferrer" className="underline-offset-4 hover:text-primary hover:underline">Contract verified on Arc Testnet</a></span>
+          <a href={`${addressUrl(FACTORING_ADDRESS)}#code`} target="_blank" rel="noreferrer" className="font-mono text-xs hover:text-primary">Contract {shortAddr(FACTORING_ADDRESS)} ↗</a>
         </div>
       </footer>
     </div>

@@ -1,3 +1,4 @@
+import { parseEventLogs } from "viem";
 import { useQuery } from "@tanstack/react-query";
 import { publicClient } from "./clients";
 import { factoringEventsAbi } from "@/config/abi";
@@ -35,7 +36,9 @@ function saveCache(c: Cache) {
 }
 
 async function getLogsRange(from: bigint, to: bigint): Promise<ChainEvent[]> {
-  const logs = await publicClient.getLogs({ address: FACTORING_ADDRESS, events: factoringEventsAbi, fromBlock: from, toBlock: to });
+  // No topic filter: the Arc RPC rejects multi-topic OR filters as "range too large". Decode locally.
+  const raw = await publicClient.getLogs({ address: FACTORING_ADDRESS, fromBlock: from, toBlock: to });
+  const logs = parseEventLogs({ abi: factoringEventsAbi, logs: raw, strict: false });
   return logs.map((l) => ({
     name: l.eventName, args: (l.args ?? {}) as Record<string, unknown>,
     hash: l.transactionHash!, block: l.blockNumber!, logIndex: l.logIndex ?? 0, timestamp: 0,

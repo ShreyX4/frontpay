@@ -106,7 +106,7 @@ function Withdraw({ connected }: { connected: boolean }) {
   const v = toUsdc(amt);
   const maxVal = me && p ? (me.value < p.idleCash ? me.value : p.idleCash) : undefined;
   let shares = p && p.totalAssets > 0n ? (v * p.totalShares) / p.totalAssets : 0n;
-  if (me && (shares > me.shares || (maxVal !== undefined && v === maxVal && me.value <= p!.idleCash))) shares = shares > me.shares ? me.shares : v === me.value ? me.shares : shares;
+  if (me && (v >= me.value || shares > me.shares)) shares = me.shares;
   const tooMuch = maxVal !== undefined && v > maxVal;
   return (
     <div className="space-y-4">

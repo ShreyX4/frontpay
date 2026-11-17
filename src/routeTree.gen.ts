@@ -10,33 +10,115 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AccountingRouteImport } from './routes/accounting'
+import { Route as BusinessRouteImport } from './routes/business'
+import { Route as InvestRouteImport } from './routes/invest'
+import { Route as UnderwritingRouteImport } from './routes/underwriting'
+import { Route as PayIndexRouteImport } from './routes/pay.index'
+import { Route as PayIdRouteImport } from './routes/pay.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AccountingRoute = AccountingRouteImport.update({
+  id: '/accounting',
+  path: '/accounting',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BusinessRoute = BusinessRouteImport.update({
+  id: '/business',
+  path: '/business',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InvestRoute = InvestRouteImport.update({
+  id: '/invest',
+  path: '/invest',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UnderwritingRoute = UnderwritingRouteImport.update({
+  id: '/underwriting',
+  path: '/underwriting',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PayIndexRoute = PayIndexRouteImport.update({
+  id: '/pay/',
+  path: '/pay/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PayIdRoute = PayIdRouteImport.update({
+  id: '/pay/$id',
+  path: '/pay/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/accounting': typeof AccountingRoute
+  '/business': typeof BusinessRoute
+  '/invest': typeof InvestRoute
+  '/underwriting': typeof UnderwritingRoute
+  '/pay/$id': typeof PayIdRoute
+  '/pay/': typeof PayIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/accounting': typeof AccountingRoute
+  '/business': typeof BusinessRoute
+  '/invest': typeof InvestRoute
+  '/underwriting': typeof UnderwritingRoute
+  '/pay/$id': typeof PayIdRoute
+  '/pay': typeof PayIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/accounting': typeof AccountingRoute
+  '/business': typeof BusinessRoute
+  '/invest': typeof InvestRoute
+  '/underwriting': typeof UnderwritingRoute
+  '/pay/$id': typeof PayIdRoute
+  '/pay/': typeof PayIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/accounting'
+    | '/business'
+    | '/invest'
+    | '/underwriting'
+    | '/pay/$id'
+    | '/pay/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/accounting'
+    | '/business'
+    | '/invest'
+    | '/underwriting'
+    | '/pay/$id'
+    | '/pay'
+  id:
+    | '__root__'
+    | '/'
+    | '/accounting'
+    | '/business'
+    | '/invest'
+    | '/underwriting'
+    | '/pay/$id'
+    | '/pay/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AccountingRoute: typeof AccountingRoute
+  BusinessRoute: typeof BusinessRoute
+  InvestRoute: typeof InvestRoute
+  UnderwritingRoute: typeof UnderwritingRoute
+  PayIdRoute: typeof PayIdRoute
+  PayIndexRoute: typeof PayIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +130,59 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/accounting': {
+      id: '/accounting'
+      path: '/accounting'
+      fullPath: '/accounting'
+      preLoaderRoute: typeof AccountingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/business': {
+      id: '/business'
+      path: '/business'
+      fullPath: '/business'
+      preLoaderRoute: typeof BusinessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invest': {
+      id: '/invest'
+      path: '/invest'
+      fullPath: '/invest'
+      preLoaderRoute: typeof InvestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/underwriting': {
+      id: '/underwriting'
+      path: '/underwriting'
+      fullPath: '/underwriting'
+      preLoaderRoute: typeof UnderwritingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pay/': {
+      id: '/pay/'
+      path: '/pay'
+      fullPath: '/pay/'
+      preLoaderRoute: typeof PayIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pay/$id': {
+      id: '/pay/$id'
+      path: '/pay/$id'
+      fullPath: '/pay/$id'
+      preLoaderRoute: typeof PayIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AccountingRoute: AccountingRoute,
+  BusinessRoute: BusinessRoute,
+  InvestRoute: InvestRoute,
+  UnderwritingRoute: UnderwritingRoute,
+  PayIdRoute: PayIdRoute,
+  PayIndexRoute: PayIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

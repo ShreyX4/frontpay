@@ -34,5 +34,6 @@ use the editor.
 - Chain/contract config lives only in src/config/chain.ts and ABIs only in src/config/abi.ts.
 - Invoice ids are 0-based (0..invoiceCount-1); getInvoice reverts for unknown ids.
 - Pricing tiers and journal-entry generation are pure functions in src/lib/invoice.ts and src/lib/accounting.ts, covered by src/test/finance.test.ts.
-- Tx hashes per invoice+action are kept in localStorage (src/lib/txstore.ts) because the contract exposes no per-action history.
+- Tx hashes/timestamps come from contract event logs (src/lib/events.ts: unfiltered getLogs in 10k-block chunks, decoded locally because the Arc RPC rejects multi-topic filters; cached in localStorage); src/lib/txstore.ts is only a fallback.
+- Human-readable invoice details live off-chain in the Cloud table invoice_meta (src/lib/meta.ts), keyed by on-chain invoice id; files go in the private 'invoices' bucket and open via signed URLs.
 - Invoice AI extraction runs server-side in src/lib/invoice-ai.functions.ts via the Lovable AI Gateway Responses API.

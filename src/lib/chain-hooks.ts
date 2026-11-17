@@ -3,6 +3,7 @@ import { useConnection } from "wagmi";
 import { getWalletClient } from "wagmi/actions";
 import { toast } from "sonner";
 import { useState } from "react";
+import type { TransactionReceipt } from "viem";
 import { publicClient, wagmiConfig } from "./clients";
 import { factoringAbi, usdcAbi } from "@/config/abi";
 import { ARC_CHAIN_ID, FACTORING_ADDRESS, USDC_ADDRESS, arcTestnet, txUrl } from "@/config/chain";
@@ -99,7 +100,7 @@ export function useChainAction() {
   const [busy, setBusy] = useState(false);
   const [step, setStep] = useState<string | null>(null);
 
-  async function run(opts: { steps: WriteStep[]; approve?: bigint; success: string; onHash?: (h: `0x${string}`, i: number) => void }) {
+  async function run(opts: { steps: WriteStep[]; approve?: bigint; success: string; onHash?: (h: `0x${string}`, i: number) => void; onReceipt?: (rc: TransactionReceipt, i: number) => void | Promise<void> }) {
     if (!address) { toast.error("Connect your wallet first"); return null; }
     if (chainId !== ARC_CHAIN_ID) { toast.error("Switch your wallet to Arc Testnet first"); return null; }
     setBusy(true);
@@ -114,18 +115,23 @@ export function useChainAction() {
       const realTotal = opts.steps.length + (needApprove ? 1 : 0);
       let n = 1;
       if (needApprove && opts.approve) {
-        setStep(`Step 1 of ${realTotal}: Allow ${usd(opts.approve)} USDC…`);
+        setStep(`Step 1 of ${realTotal}: Confirm in your wallet…`);
         const h = await wallet.writeContract({ chain: arcTestnet, account: address, address: USDC_ADDRESS, abi: usdcAbi, functionName: "approve", args: [FACTORING_ADDRESS, opts.approve] });
+        setStep(`Step 1 of ${realTotal}: Allowing ${usd(opts.approve)} USDC…`);
         await publicClient.waitForTransactionReceipt({ hash: h });
         n = 2;
       }
       for (const [i, s] of opts.steps.entries()) {
-        setStep(realTotal > 1 ? `Step ${n} of ${realTotal}: ${s.label}…` : `${s.label}…`);
+        const prefix = realTotal > 1 ? `Step ${n} of ${realTotal}: ` : "";
+        setStep(`${prefix}Checking…`);
         await publicClient.simulateContract({ account: address, address: FACTORING_ADDRESS, abi: factoringAbi, functionName: s.functionName, args: s.args } as never);
+        setStep(`${prefix}Confirm in your wallet…`);
         const h = await wallet.writeContract({ chain: arcTestnet, account: address, address: FACTORING_ADDRESS, abi: factoringAbi, functionName: s.functionName, args: s.args } as never);
+        setStep(`${prefix}${s.label}…`);
         const rc = await publicClient.waitForTransactionReceipt({ hash: h });
         if (rc.status !== "success") throw new Error("Transaction reverted");
         opts.onHash?.(h, i);
+        await opts.onReceipt?.(rc, i);
         last = h; n++;
       }
       toast.success(opts.success, last ? { action: { label: "View receipt", onClick: () => window.open(txUrl(last!), "_blank") } } : undefined);

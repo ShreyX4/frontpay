@@ -1,6 +1,8 @@
 import { BaseError, ContractFunctionRevertedError } from "viem";
 
 const MAP: [RegExp, string][] = [
+  [/no such invoice/i, "That invoice doesn't exist"],
+  [/transaction reverted/i, "The transaction failed on-chain"],
   [/user (rejected|denied)|rejected the request/i, "You cancelled the request in your wallet."],
   [/duplicate|fingerprint/i, "Duplicate invoice: already financed or submitted"],
   [/liquidity|idle/i, "Pool lacks liquidity for this action"],

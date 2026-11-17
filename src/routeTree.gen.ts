@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BusinessRouteImport } from './routes/business'
 import { Route as InvestRouteImport } from './routes/invest'
+import { Route as UnderwritingRouteImport } from './routes/underwriting'
 import { Route as PayIndexRouteImport } from './routes/pay.index'
 import { Route as PayIdRouteImport } from './routes/pay.$id'
 
@@ -30,6 +31,11 @@ const InvestRoute = InvestRouteImport.update({
   path: '/invest',
   getParentRoute: () => rootRouteImport,
 } as any)
+const UnderwritingRoute = UnderwritingRouteImport.update({
+  id: '/underwriting',
+  path: '/underwriting',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PayIndexRoute = PayIndexRouteImport.update({
   id: '/pay/',
   path: '/pay/',
@@ -45,6 +51,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/business': typeof BusinessRoute
   '/invest': typeof InvestRoute
+  '/underwriting': typeof UnderwritingRoute
   '/pay/$id': typeof PayIdRoute
   '/pay/': typeof PayIndexRoute
 }
@@ -52,6 +59,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/business': typeof BusinessRoute
   '/invest': typeof InvestRoute
+  '/underwriting': typeof UnderwritingRoute
   '/pay/$id': typeof PayIdRoute
   '/pay': typeof PayIndexRoute
 }
@@ -60,21 +68,31 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/business': typeof BusinessRoute
   '/invest': typeof InvestRoute
+  '/underwriting': typeof UnderwritingRoute
   '/pay/$id': typeof PayIdRoute
   '/pay/': typeof PayIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/business' | '/invest' | '/pay/$id' | '/pay/'
+  fullPaths:
+    '/' | '/business' | '/invest' | '/underwriting' | '/pay/$id' | '/pay/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/business' | '/invest' | '/pay/$id' | '/pay'
-  id: '__root__' | '/' | '/business' | '/invest' | '/pay/$id' | '/pay/'
+  to: '/' | '/business' | '/invest' | '/underwriting' | '/pay/$id' | '/pay'
+  id:
+    | '__root__'
+    | '/'
+    | '/business'
+    | '/invest'
+    | '/underwriting'
+    | '/pay/$id'
+    | '/pay/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BusinessRoute: typeof BusinessRoute
   InvestRoute: typeof InvestRoute
+  UnderwritingRoute: typeof UnderwritingRoute
   PayIdRoute: typeof PayIdRoute
   PayIndexRoute: typeof PayIndexRoute
 }
@@ -102,6 +120,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InvestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/underwriting': {
+      id: '/underwriting'
+      path: '/underwriting'
+      fullPath: '/underwriting'
+      preLoaderRoute: typeof UnderwritingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pay/': {
       id: '/pay/'
       path: '/pay'
@@ -123,6 +148,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BusinessRoute: BusinessRoute,
   InvestRoute: InvestRoute,
+  UnderwritingRoute: UnderwritingRoute,
   PayIdRoute: PayIdRoute,
   PayIndexRoute: PayIndexRoute,
 }

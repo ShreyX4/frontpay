@@ -14,7 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      invoice_meta: {
+        Row: {
+          business_name: string | null
+          created_at: string
+          customer_email: string | null
+          customer_name: string | null
+          description: string | null
+          file_url: string | null
+          invoice_id: number
+        }
+        Insert: {
+          business_name?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          description?: string | null
+          file_url?: string | null
+          invoice_id: number
+        }
+        Update: {
+          business_name?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          description?: string | null
+          file_url?: string | null
+          invoice_id?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

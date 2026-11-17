@@ -1,0 +1,13 @@
+{
+  "name": "frontpay-contracts",
+  "private": true,
+  "scripts": {
+    "compile": "node compile.js",
+    "test": "node compile.js && npx hardhat run test.js"
+  },
+  "dependencies": {
+    "solc": "0.8.24",
+    "hardhat": "^2.22.0",
+    "ethers": "^6.13.0"
+  }
+}

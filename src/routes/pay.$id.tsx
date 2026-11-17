@@ -49,7 +49,7 @@ function PayInvoice() {
   const headline = !inv ? "" :
     inv.status === STATUS.Registered ? `${from} is asking you to confirm this invoice` :
     inv.status === STATUS.Funded || inv.status === STATUS.Defaulted ? `${from} sent you an invoice` :
-    inv.status === STATUS.Repaid ? `You paid ${from}` : `Invoice from ${from}`;
+    inv.status === STATUS.Repaid ? (address && repaid && String(repaid.args.payer).toLowerCase() === address.toLowerCase() ? `You paid ${from}` : `Paid in full to ${from}`) : `Invoice from ${from}`;
 
   return (
     <Container>

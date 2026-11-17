@@ -11,7 +11,8 @@ import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, Table
 import { useInvoices } from "@/lib/chain-hooks";
 import { businessEntries, poolEntries, totals, type Entry } from "@/lib/accounting";
 import { usd, fmtDate } from "@/lib/format";
-import { getTx } from "@/lib/txstore";
+import { useTxLookup } from "@/lib/events";
+import { useInvoiceMeta } from "@/lib/meta";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/accounting")({
@@ -42,12 +43,16 @@ function Accounting() {
     return businessEntries(scoped ? all.filter((i) => i.business.toLowerCase() === address!.toLowerCase()) : all);
   }, [data, view, scoped, address]);
   const t = totals(entries);
+  const lookup = useTxLookup();
+  const { data: meta } = useInvoiceMeta();
+  const party = (e: Entry) => { const m = meta?.get(e.invoiceId.toString()); return view === "business" ? m?.customer_name : m?.business_name; };
 
   function exportCsv() {
     const rows = [["Date", "Invoice", "Account", "Debit", "Credit", "Memo", "Tx"]];
     for (const e of entries) {
-      const tx = e.txAction ? getTx(e.invoiceId, e.txAction) : undefined;
-      rows.push([fmtDate(e.date), `#${e.invoiceId}`, e.account, e.debit ? formatUnits(e.debit, 6) : "", e.credit ? formatUnits(e.credit, 6) : "", e.memo, tx ?? ""]);
+      const tx = e.txAction ? lookup(e.invoiceId, e.txAction).hash : undefined;
+      const p = party(e);
+      rows.push([fmtDate(e.date), `#${e.invoiceId}`, e.account, e.debit ? formatUnits(e.debit, 6) : "", e.credit ? formatUnits(e.credit, 6) : "", p ? `${e.memo} · ${p}` : e.memo, tx ?? ""]);
     }
     rows.push(["", "", "Totals", formatUnits(t.debit, 6), formatUnits(t.credit, 6), "", ""]);
     const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
@@ -94,7 +99,7 @@ function Accounting() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {entries.map((e, i) => <EntryRow key={i} e={e} first={i === 0 || entries[i - 1]!.date !== e.date || entries[i - 1]!.invoiceId !== e.invoiceId} />)}
+              {entries.map((e, i) => <EntryRow key={i} e={e} tx={e.txAction ? lookup(e.invoiceId, e.txAction).hash : undefined} party={party(e)} first={i === 0 || entries[i - 1]!.date !== e.date || entries[i - 1]!.invoiceId !== e.invoiceId} />)}
             </TableBody>
             <TableFooter>
               <TableRow>
@@ -111,15 +116,14 @@ function Accounting() {
   );
 }
 
-function EntryRow({ e, first }: { e: Entry; first: boolean }) {
-  const tx = e.txAction ? getTx(e.invoiceId, e.txAction) : undefined;
+function EntryRow({ e, first, tx, party }: { e: Entry; first: boolean; tx?: string | undefined; party?: string | null | undefined }) {
   return (
     <TableRow className={first ? "border-t-2" : ""}>
       <TableCell className="whitespace-nowrap text-muted-foreground">{first ? fmtDate(e.date) : ""}</TableCell>
       <TableCell className={cn("whitespace-nowrap", e.credit > 0n && "pl-10")}>{e.account}</TableCell>
       <TableCell className="text-right num">{e.debit ? usd(e.debit) : ""}</TableCell>
       <TableCell className="text-right num">{e.credit ? usd(e.credit) : ""}</TableCell>
-      <TableCell className="text-sm text-muted-foreground">{e.memo}</TableCell>
+      <TableCell className="text-sm text-muted-foreground">{e.memo}{party && <span className="text-foreground"> · {party}</span>}</TableCell>
       <TableCell>{first && tx ? <TxLink hash={tx} label="View" /> : null}</TableCell>
     </TableRow>
   );

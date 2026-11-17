@@ -3,7 +3,8 @@ import { useState } from "react";
 import { useConnection } from "wagmi";
 import { Loader2, Lock, ClipboardCheck, AlarmClock } from "lucide-react";
 import { Container } from "@/components/fp/shell";
-import { PageHeader, Addr, Empty, Stat } from "@/components/fp/bits";
+import { PageHeader, Addr, Empty, Stat, Party } from "@/components/fp/bits";
+import { useInvoiceMeta } from "@/lib/meta";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -69,6 +70,8 @@ function Underwriting() {
 
 function OfferCard({ inv, isOwner, maxAdv, maxFee }: { inv: Invoice; isOwner: boolean; maxAdv?: number | undefined; maxFee?: number | undefined }) {
   const days = Math.max(1, daysLeft(inv.dueDate));
+  const { data: metaMap } = useInvoiceMeta();
+  const meta = metaMap?.get(inv.id.toString());
   const tier = suggestTier(inv.faceAmount, days);
   const [adv, setAdv] = useState((tier.advanceBps / 100).toString());
   const [fee, setFee] = useState((tier.feeBps / 100).toString());
@@ -84,7 +87,7 @@ function OfferCard({ inv, isOwner, maxAdv, maxFee }: { inv: Invoice; isOwner: bo
         <div>
           <div className="flex items-center gap-3"><span className="font-semibold">{inv.invoiceRef}</span>
             <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-semibold text-accent-foreground">Tier {tier.tier}</span></div>
-          <div className="mt-1 text-sm text-muted-foreground">Business <Addr a={inv.business} /> · Customer <Addr a={inv.debtor} /></div>
+          <div className="mt-1 text-sm text-muted-foreground">From <Party name={meta?.business_name} addr={inv.business} /> · Billed to <Party name={meta?.customer_name} addr={inv.debtor} /></div>
           <div className="text-sm text-muted-foreground">Due {fmtDate(inv.dueDate)} · {days} days left · #{inv.id.toString()}</div>
         </div>
         <div className="text-xl font-semibold num">{usd(inv.faceAmount)}</div>
@@ -126,11 +129,13 @@ function OfferCard({ inv, isOwner, maxAdv, maxFee }: { inv: Invoice; isOwner: bo
 function OverdueRow({ inv, isOwner, grace }: { inv: Invoice; isOwner: boolean; grace: bigint }) {
   const { run, busy, step } = useChainAction();
   const unlock = inv.dueDate + grace;
+  const { data: metaMap } = useInvoiceMeta();
+  const meta = metaMap?.get(inv.id.toString());
   const canDefault = Math.floor(Date.now() / 1000) > Number(unlock);
   return (
     <div className="surface flex flex-wrap items-center justify-between gap-4 p-4">
       <div>
-        <div className="font-medium">{inv.invoiceRef} <span className="text-muted-foreground">· {usd(inv.advanceAmount)} advanced</span></div>
+        <div className="font-medium">{inv.invoiceRef}{meta?.business_name && ` · ${meta.business_name}`} <span className="text-muted-foreground">· {usd(inv.advanceAmount)} advanced</span></div>
         <div className="text-sm text-muted-foreground">Due {fmtDate(inv.dueDate)} · {canDefault ? "Grace period ended" : `Grace ends ${fmtDate(unlock)}`}</div>
       </div>
       <Button variant="destructive" disabled={!isOwner || !canDefault || busy} onClick={() => run({
